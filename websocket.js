@@ -12,44 +12,76 @@ const startWebSocketForAccount = (account) => {
 		APISECRET: account.accountSecretKey
 	});
 
+	socket.monitoring = false; // Initialize socket.monitoring
+	const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-	socket.intervalId = setInterval(async () => {
-		//Todo
-		//Check PNL
-		//Kiểm tra vị thế
-		const positionRisk = await binance.futuresPositionRisk();
-		const positions = positionRisk.filter(x => Number(x.positionAmt) != 0);
-		const dataPNL = []
-		for (let position of positions) {
-			let pnlPercent = calcPNLPercent(position)
-			const data = {
-				accountId: account.accountId,
-				symbol: position.symbol,
-				side: position.positionAmt > 0 ? 'LONG' : 'SHORT',
-				pnlPercent: `${Number(pnlPercent).toFixed(4)}`,
-				pnlValue: `${Number(position.unRealizedProfit).toFixed(4)}`
+	const checkPNLAndPositions = async () => {
+		try {
+			// Check PNL
+			const positionRisk = await binance.futuresPositionRisk();
+			const positions = positionRisk.filter(x => Number(x.positionAmt) != 0);
+			const dataPNL = [];
+			for (let position of positions) {
+				let pnlPercent = calcPNLPercent(position);
+				const data = {
+					accountId: account.accountId,
+					symbol: position.symbol,
+					side: position.positionAmt > 0 ? 'LONG' : 'SHORT',
+					pnlPercent: `${Number(pnlPercent).toFixed(4)}`,
+					pnlValue: `${Number(position.unRealizedProfit).toFixed(4)}`
+				};
+				dataPNL.push(data);
 			}
-			dataPNL.push(data)
-		}
-		const data = {
-			dataPNL: dataPNL
-		}
-		socket.emit('accountData', data);
-		//unRealizedProfit - Số tiền PNL, có thể âm
+			const data = {
+				dataPNL: dataPNL
+			};
 
+			// Check open positions
+			const allOrders = await binance.futuresOpenOrders();
+			if (allOrders.length === 0) {
+			} else {
+				const groupedOrders = allOrders.reduce((acc, order) => {
+					if (!acc[order.symbol]) {
+						acc[order.symbol] = [];
+					}
+					acc[order.symbol].push(order);
+					return acc;
+				}, {});
 
-	}, 1000); // Log thông tin mỗi 2 giây
+				for (let symbol in groupedOrders) {
+					const hasLimitOrder = groupedOrders[symbol].some(order => order.type === 'LIMIT');
+					if (hasLimitOrder) continue;
+					const position = positionRisk.find(x => x.symbol === symbol);
+					if (Number(position.positionAmt) != 0) continue;
+					await closePosition(binance, symbol);
+				}
+			}
+
+			socket.emit('accountData', data);
+		} catch (error) {
+			console.error('Error in checkPNLAndPositions:', error);
+		}
+	};
+	const startMonitoring = async () => {
+		socket.monitoring = true; // Set socket.monitoring to true
+		while (socket.monitoring) {
+			await checkPNLAndPositions();
+			await delay(1000); // Adjust the delay as needed
+		}
+	};
+
+	startMonitoring();
 
 	socket.on('connection', (clientSocket) => {
 		console.log(`WebSocket started for account ${account.accountId}`);
 
-		clientSocket.on('closeSymbol', (messageData) => {
+		clientSocket.on('closeSymbol', async (messageData) => {
 			if (messageData.closeAll) {
 				//Close All
-				closeAllPositions(binance)
+				await closeAllPositions(binance)
 			}
 			else {
-				closePosition(binance, messageData.symbol)
+				await closePosition(binance, messageData.symbol)
 			}
 		});
 	});
@@ -64,17 +96,16 @@ const startWebSocketForAccount = (account) => {
 };
 
 
-const stopWebSocketForAccount = (account) => {
+const stopWebSocketForAccount = async (account) => {
 	const socket = activeAccountSockets[account.accountId];
-	console.log(account);
 	if (socket) {
-		clearInterval(socket.intervalId);
+		socket.monitoring = false; // Initialize socket.monitoring
 		const binance = new Binance();
 		binance.options({
 			APIKEY: account.accountAPIKey,
 			APISECRET: account.accountSecretKey
 		});
-		closeAllPositions(binance)
+		await closeAllPositions(binance)
 		console.log(`WebSocket stopped for account ${account.accountId}`);
 		delete activeAccountSockets[account.accountId];
 	}

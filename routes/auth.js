@@ -1,15 +1,13 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { getUserByUsername } from '../database/dbContext.js';
-
+import { verifyToken } from '../middleware/auth.js';
+import { getUserByUsername,changePassword} from '../database/dbContext.js';
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET
 
-router.post('/',  async (req, res) => {
-    console.log(JWT_SECRET);
+router.post('/', async (req, res) => {
     const { username, password } = req.body;
-    console.log(req.body);
     let result = {
         token: '',
         errorFlg: true,
@@ -33,7 +31,7 @@ router.post('/',  async (req, res) => {
             result.errorFlg = false
             result.message = 'Authentication success'
             return res.status(200).json(result);
-        } 
+        }
         else {
             result.message = "Authentication failed"
             res.status(401).json(result);
@@ -62,6 +60,20 @@ router.post('/verify-token', async (req, res) => {
         console.log(err);
         result.message = 'Invalid token'
         return res.status(401).json(result);
+    }
+});
+
+router.put('/change-password', verifyToken, async (req, res) => {
+    const { username } = req.user;
+    const { currentPassword, newPassword } = req.body;
+
+    try {
+        // Call changePassword function
+        const message = await changePassword(username, currentPassword, newPassword);
+        res.status(200).json({ message: message });
+    } catch (error) {
+        console.error('Error updating password:', error.message);
+        res.status(400).json({ message: error.message });
     }
 });
 

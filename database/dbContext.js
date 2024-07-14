@@ -1,4 +1,5 @@
 import db from './database.js';
+import bcrypt from 'bcryptjs';
 import { EventEmitter } from 'events';
 
 const eventEmitter = new EventEmitter();
@@ -6,6 +7,36 @@ const eventEmitter = new EventEmitter();
 // User related functions
 const getUserByUsername = (username, callback) => {
   db.get("SELECT * FROM users WHERE username = ?", [username], callback);
+};
+// Function to change user password
+const changePassword = async (username, currentPassword, newPassword) => {
+  return new Promise((resolve, reject) => {
+      // Retrieve user from database
+      db.get("SELECT * FROM users WHERE username = ?", [username], async (err, user) => {
+          if (err) {
+              reject(err);
+          }
+          if (!user) {
+              reject(new Error('User not found'));
+          }
+
+          // Check if current password matches
+          if (!bcrypt.compareSync(currentPassword, user.password)) {
+              reject(new Error('Current password is incorrect'));
+          }
+
+          // Hash the new password
+          const hashedPassword = bcrypt.hashSync(newPassword, 10);
+
+          // Update the password in the database
+          db.run("UPDATE users SET password = ? WHERE username = ?", [hashedPassword, username], (err) => {
+              if (err) {
+                  reject(err);
+              }
+              resolve('Password updated successfully');
+          });
+      });
+  });
 };
 
 const updateUserSettings = (username, settings, callback) => {
@@ -78,6 +109,7 @@ const getAccountByUsernameAndAccountId = (username1,username2, accountId, callba
 };
 export {
   getUserByUsername,
+  changePassword,
   updateUserSettings,
   insertUserSettings,
   getUserSettings,

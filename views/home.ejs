@@ -24,6 +24,14 @@
                         type="button" role="tab" aria-controls="setting" aria-selected="false">Cài đặt</button>
                 </li>
                 <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="info-tab" data-bs-toggle="tab" data-bs-target="#info"
+                        type="button" role="tab" aria-controls="info" aria-selected="false">Thông tin</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-danger" type="button" data-bs-toggle="modal"
+                    data-bs-target="#changePasswordModal">Đổi mật khẩu</button>
+                </li>
+                <li class="nav-item" role="presentation">
                     <button class=" nav-link text-danger" type="button" onclick="Auth.logout()">Đăng xuất</button>
                 </li>
             </ul>
@@ -36,15 +44,7 @@
                                 data-bs-target="#exampleModal">Thêm tài khoản mới</button>
                         </div>
                         <div class="col-9">
-                            <div class="mb-3 row">
-                                <label for="inputPassword" class="col-2 col-form-label text-end">Webhook URL</label>
-                                <div class="col">
-                                    <input class="form-control" id="webhook-endpoint" type="text" disabled>
-                                </div>
-                                <div class="col-2">
-                                    <button type="button" class="btn btn-info w-100" onclick="Setting.copyWebhookToClipboard()">Sao chép</button>
-                                </div>
-                            </div>
+
                         </div>
                     </div>
                     <div class="row">
@@ -101,6 +101,27 @@
                         </div>
                     </div>
                 </div>
+                <div class="tab-pane fade" id="info" role="tabpanel" aria-labelledby="info-tab">
+                    <div class="row pt-2">
+                        <label for="inputPassword" class="col-2 col-form-label">Webhook URL</label>
+                        <div class="col">
+                            <input class="form-control" id="webhook-endpoint" type="text" disabled>
+                        </div>
+                        <div class="col-2">
+                            <button type="button" class="btn btn-info w-100" onclick="Setting.copyWebhookToClipboard()">Sao chép</button>
+                        </div>
+                    </div>
+                    <div class="row pt-2">
+                        <label for="inputPassword" class="col-2 col-form-label">Webhook Content</label>
+                        <div class="col">
+                            <textarea class="form-control" id="webhook-content" rows="12"  disabled
+                            ></textarea>
+                        </div>
+                        <div class="col-2">
+                            <button type="button" class="btn btn-info w-100" onclick="Setting.copyWebhookContentToClipboard()">Sao chép</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -147,12 +168,60 @@
         </div>
     </div>
 
+    <!-- Modal change password -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content was-validated">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changePasswordModalLabel">Thay đổi mật khẩu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label">Mật khẩu hiện tại</label>
+                        <input type="password" class="form-control" id="currentPassword" required
+                            autocomplete="off">
+                        <div class="invalid-feedback">
+                            Bắt buộc phải nhập mật khẩu cũ
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">Mật khẩu mới</label>
+                        <input type="password" class="form-control" id="newPassword" required
+                            autocomplete="off">
+                        <div class="invalid-feedback">
+                            Bắt buộc phải nhập mật khẩu mới
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary" onclick="Auth.changePassword()">Thay đổi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <script src="https://unpkg.com/axios@1.6.7/dist/axios.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <!-- Script to handle redirection after successful login -->
     <script>
 
         document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('webhook-content').value = `{
+    "symbol": "EOSUSDT",
+    "order_action": "buy",
+    "sizePricePrecision": "5",
+    "price": "0.554",
+    "position_size_usdt": "1",
+    "leverage": "10",
+    "callbackRate": "3",
+    "takeProfitRate": "6",
+    "username": "user1",
+    "accountId": "main"
+}`
             const token = sessionStorage.getItem('token')
             if (!token) {
                 window.location.href = '/login';
@@ -217,6 +286,10 @@
             copyWebhookToClipboard: function () {
                 const webhook = document.getElementById(`webhook-endpoint`).value
                 navigator.clipboard.writeText(webhook)
+            },
+            copyWebhookContentToClipboard: function () {
+                const webhookContent = document.getElementById(`webhook-content`).value
+                navigator.clipboard.writeText(webhookContent)
             }
         }
         const Account = {
@@ -317,7 +390,31 @@
             logout: function () {
                 sessionStorage.removeItem('token')
                 window.location.href = '/login'
+            },
+            changePassword: function () {
+                const token = sessionStorage.getItem('token')
+                const info = {
+                    currentPassword: document.getElementById('currentPassword').value,
+                    newPassword: document.getElementById('newPassword').value
+                }
+                console.log(info);
+                if (info.currentPassword == '' || info.newPassword == '') return
+                axios.put('/auth/change-password', info, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                    .then((response) => {
+                        alert(`Đổi mật khẩu thành công, hãy đăng nhập lại`)
+                        Auth.logout()
+                    })
+                    .catch((error) => {
+                        alert(error.response.data.message);
+                        document.getElementById('currentPassword').value = ''
+                        document.getElementById('newPassword').value = ''
+                    });
             }
+
         }
         const SocketModel = {
             sockets: {}, // Object to store socket connections by account ID
