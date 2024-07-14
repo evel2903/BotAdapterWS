@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Trang chủ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://getbootstrap.com/docs/5.3/assets/css/docs.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body>
+
+    <!-- Content here -->
+    <div class="container">
+        <div class="container">
+            <!-- Content here -->
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home"
+                        type="button" role="tab" aria-controls="account" aria-selected="true">Cài đặt tài khoản</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="setting-tab" data-bs-toggle="tab" data-bs-target="#setting"
+                        type="button" role="tab" aria-controls="setting" aria-selected="false">Cài đặt</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class=" nav-link text-danger" type="button" onclick="Auth.logout()">Đăng xuất</button>
+                </li>
+            </ul>
+            <div class="tab-content" id="myTabContent">
+                <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+
+                    <div class="row pt-2">
+                        <div class="col-3">
+                            <button type="button" class=" btn btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#exampleModal">Thêm tài khoản mới</button>
+                        </div>
+                        <div class="col-9">
+                            <div class="mb-3 row">
+                                <label for="inputPassword" class="col-2 col-form-label text-end">Webhook URL</label>
+                                <div class="col">
+                                    <input class="form-control" id="webhook-endpoint" type="text" disabled>
+                                </div>
+                                <div class="col-2">
+                                    <button type="button" class="btn btn-info w-100" onclick="Setting.copyWebhookToClipboard()">Sao chép</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <h3>Danh sách tài khoản</h3>
+                        <div class="accordion" id="accountList">
+
+
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="setting" role="tabpanel" aria-labelledby="setting-tab">
+                    <div class="was-validated">
+                        <div class="mb-3">
+                            <label for="telegramToken" class="form-label">Telegram Token</label>
+                            <textarea class="form-control is-invalid" id="telegramToken" required
+                                autocomplete="off"></textarea>
+                            <div class="invalid-feedback">
+                                Bắt buộc phải nhập Telegram Token
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="telegramChannel" class="form-label">Telegram Channel</label>
+                            <textarea class="form-control is-invalid" id="telegramChannel" required
+                                autocomplete="off"></textarea>
+                            <div class="invalid-feedback">
+                                Bắt buộc phải nhập Telegram Channel
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="useTelegram" class="form-label">Gửi thông tin lên Telegram</label>
+                            <select class="form-select" id="useTelegram">
+                                <option value="1" selected>Có</option>
+                                <option value="0">Không</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="orderType" class="form-label">Chọn Order Type</label>
+                            <select class="form-select" id="orderType">
+                                <option value="LIMIT" selected>LIMIT</option>
+                                <option value="MARKET">MARKET</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Bắt buộc phải chọn Type Order
+                            </div>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <button class="btn btn-primary" type="button" onclick="Setting.updateSetting()">Lưu cài
+                                đặt</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content was-validated">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Thêm mới tài khoản</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="accountId" class="form-label">ID tài khoản</label>
+                        <p>Người dùng tự định nghĩa, sử dụng trong Alert TradingView</p>
+                        <input type="text" class="form-control" id="accountId" required autocomplete="off">
+                        <div class="invalid-feedback">
+                            Bắt buộc phải nhập ID tài khoản
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="accountAPIKey" class="form-label">API Key</label>
+                        <textarea class="form-control" id="accountAPIKey" rows="3" required
+                            autocomplete="off"></textarea>
+                        <div class="invalid-feedback">
+                            Bắt buộc phải nhập API Key
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="accountSecretKey" class="form-label">Secret Key</label>
+                        <textarea class="form-control" id="accountSecretKey" rows="3" required
+                            autocomplete="off"></textarea>
+                        <div class="invalid-feedback">
+                            Bắt buộc phải nhập Secret Key
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary" onclick="Account.addAccount()">Thêm mới</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/axios@1.6.7/dist/axios.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- Script to handle redirection after successful login -->
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const token = sessionStorage.getItem('token')
+            if (!token) {
+                window.location.href = '/login';
+            } else {
+                // Validate token on page load
+                axios.post('/auth/verify-token', { token })
+                    .then(response => {
+                        const data = response.data
+                        if (data.errorFlg == true) {
+                            window.location.href = '/login'
+                        }
+                        else {
+                            Setting.fetchSetting()
+                            Account.fetchAccount()
+                        }
+                    })
+                    .catch(error => {
+                        window.location.href = '/login';
+                    });
+            }
+        });
+
+
+        const Setting = {
+            updateSetting: function () {
+                const token = sessionStorage.getItem('token')
+                const setting = {
+                    telegramToken: document.getElementById('telegramToken').value,
+                    telegramChannel: document.getElementById('telegramChannel').value,
+                    useTelegram: Number(document.getElementById('useTelegram').value),
+                    orderType: document.getElementById('orderType').value
+                }
+                if (setting.telegramToken == '' || setting.telegramChannel == '') return
+                axios.post('/setting', setting, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                    .then(function (response) {
+                        alert(`Cập nhật thành công`)
+                    })
+            },
+            fetchSetting: function () {
+                const token = sessionStorage.getItem('token')
+                axios.get('/setting', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                    .then(function (response) {
+                        const data = response.data.data
+                        document.getElementById('telegramToken').value = data.telegramToken
+                        document.getElementById('telegramChannel').value = data.telegramChannel
+                        document.getElementById('useTelegram').value = data.useTelegram
+                        document.getElementById('orderType').value = data.orderType
+
+                        const currentUrl = new URL(window.location.href);
+                        const baseUrl = `${currentUrl.protocol}//${currentUrl.host}`;
+                        document.getElementById(`webhook-endpoint`).value = `${baseUrl}/${data.webhook}`
+                    })
+            },
+            copyWebhookToClipboard: function () {
+                const webhook = document.getElementById(`webhook-endpoint`).value
+                navigator.clipboard.writeText(webhook)
+            }
+        }
+        const Account = {
+            fetchAccount: function () {
+                const token = sessionStorage.getItem('token')
+                axios.get('/accounts', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                    .then(function (response) {
+                        const data = response.data.data
+                        let result = ``
+                        for (let account of data) {
+                            result += Account.renderAccountItem(account)
+                        }
+                        document.getElementById('accountList').innerHTML = result
+                    })
+            },
+            addAccount: function () {
+                const token = sessionStorage.getItem('token')
+                const account = {
+                    accountAPIKey: document.getElementById('accountAPIKey').value,
+                    accountSecretKey: document.getElementById('accountSecretKey').value,
+                    accountId: document.getElementById('accountId').value
+                }
+                if (account.accountAPIKey == '' || account.accountSecretKey == '' || account.accountId == '') return
+                axios.post('/accounts', account, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                    .then(function (response) {
+                        const data = response.data.data
+
+                        const newRow = Account.renderAccountItem(account)
+
+                        const accountList = document.getElementById('accountList');
+                        accountList.innerHTML += newRow;
+                        Account.clearAndHideModal()
+                        alert(`Thêm tài khoản thành công`)
+                    })
+            },
+            delAccount: function (accountId) {
+                const token = sessionStorage.getItem('token')
+                if (accountId == '') return
+                axios.delete('/accounts/' + accountId, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                    .then(function (response) {
+                        const data = response.data.data
+                        console.log(data);
+                        document.getElementById(`account-${accountId}`).remove()
+                        SocketModel.disconnectSocketByAccountId(accountId)
+                    })
+            },
+            renderAccountItem: function (account) {
+                return `
+                            <div class="accordion-item" id="account-${account.accountId}">
+                              <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-${account.accountId}" aria-expanded="true" aria-controls="panelsStayOpen-${account.accountId}"
+                                onclick="SocketModel.checkIfCollapsed(this, '${account.accountId}')">
+                                  Id tài khoản: ${account.accountId}
+                                </button>
+                              </h2>
+                              <div id="panelsStayOpen-${account.accountId}" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="col-2"><button type="button" class="btn btn-primary w-100" onclick="Account.delAccount('${account.accountId}')">Xóa tài khoản</button></div>
+                                        <div class="col-2"><button type="button" class="btn btn-danger w-100" onclick="SocketModel.closeAllSymbols('${account.accountId}')">Đóng tất cả</button></div>
+
+                                    </div>
+                                    <div class="row pt-1">
+                                        <div class="row">
+                                            <div class="col-2">Vị thế</div>
+                                            <div class="col-2">Symbol</div>
+                                            <div class="col-3">PNL (%)</div>
+                                            <div class="col-3">PNL (USDT)</div>
+                                        </div>
+                                    </div>
+                                    <div class="row pt-2" id="account-${account.accountId}-symbols">
+
+                                    </div>
+                                </div>
+                              </div>
+                            </div>
+                `
+            },
+            clearAndHideModal: function () {
+                document.getElementById('accountId').value = '';
+                document.getElementById('accountAPIKey').value = '';
+                document.getElementById('accountSecretKey').value = '';
+            }
+        }
+        const Auth = {
+            logout: function () {
+                sessionStorage.removeItem('token')
+                window.location.href = '/login'
+            }
+        }
+        const SocketModel = {
+            sockets: {}, // Object to store socket connections by account ID
+
+            connectSocketAccount(accountId) {
+                const socket = io(`/ws/${accountId}`);
+                this.sockets[accountId] = socket; // Store the socket connection
+
+                socket.on('accountData', (data) => {
+                    const dataPNL = data.dataPNL
+
+                    const parentElement = document.getElementById(`account-${accountId}-symbols`);
+                    const childIds = Array.from(parentElement.children).map(child => child.id);
+
+                    // Create a set of symbols from the incoming data for quick lookup
+                    const dataSymbols = new Set(dataPNL.map(item => `item-${accountId}-symbol-${item.symbol}`));
+
+                    // Iterate over childIds and remove any elements not present in the data
+                    for (let childId of childIds) {
+                        if (!dataSymbols.has(childId)) {
+                            const elementToRemove = document.getElementById(childId);
+                            if (elementToRemove) {
+                                elementToRemove.remove();
+                            }
+                        }
+                    }
+
+                    // Iterate over the data and update or add elements as necessary
+                    for (let item of dataPNL) {
+                        const itemId = `item-${accountId}-symbol-${item.symbol}`;
+                        if (!childIds.includes(itemId)) {
+                            parentElement.innerHTML += SocketModel.renderRowPNL(item);
+                        } else {
+                            const element = document.getElementById(itemId);
+                            element.innerHTML = SocketModel.renderContentRowPNL(item);
+                        }
+                    }
+                });
+            },
+
+            closeSymbol: function (accountId, symbol) {
+                this.sockets[accountId].emit('closeSymbol', {
+                    symbol: symbol,
+                    closeAll: false
+                });
+            },
+            closeAllSymbols: function (accountId) {
+                this.sockets[accountId].emit('closeSymbol', {closeAll: true});
+            },
+
+            disconnectSocketByAccountId(accountId) {
+                const socket = this.sockets[accountId];
+                if (socket) {
+                    socket.disconnect(); // Disconnect the socket
+                    delete this.sockets[accountId]; // Remove the socket from the object
+                    console.log(`Disconnected socket for account ID: ${accountId}`);
+                } else {
+                    console.log(`No socket found for account ID: ${accountId}`);
+                }
+            },
+            checkIfCollapsed: function (button, accountId) {
+                if (button.classList.contains('collapsed')) {
+                    SocketModel.disconnectSocketByAccountId(accountId);
+                } else {
+                    SocketModel.connectSocketAccount(accountId);
+                }
+            },
+            renderRowPNL: function (data) {
+                const pnlClass = data.pnlValue < 0 ? 'text-danger' : 'text-success'; // text-danger for red, text-success for green
+
+                return `
+                    <div class="row pt-1" id="item-${data.accountId}-symbol-${data.symbol}">
+                        <div class="col-2  ${data.side == 'SHORT' ? 'text-danger' : 'text-success'} font-weight-bold">${data.side}</div>
+                        <div class="col-2">${data.symbol}</div>
+                        <div class="col-3  ${data.pnlValue < 0 ? 'text-danger' : 'text-success'}">${data.pnlPercent}%</div>
+                        <div class="col-3  ${data.pnlValue < 0 ? 'text-danger' : 'text-success'}">${data.pnlValue}USDT</div>
+                        <div class="col-2"><button type="button" onclick="SocketModel.closeSymbol('${data.accountId}', '${data.symbol}')" class="btn btn-warning w-100">Đóng</button></div>
+                    </div>
+                    `;
+            },
+            renderContentRowPNL: function (data) {
+                const pnlClass = data.pnlValue < 0 ? 'text-danger' : 'text-success'; // text-danger for red, text-success for green
+
+                return `
+                        <div class="col-2  ${data.side == 'SHORT' ? 'text-danger' : 'text-success'} font-weight-bold">${data.side}</div>
+                        <div class="col-2">${data.symbol}</div>
+                        <div class="col-3  ${data.pnlValue < 0 ? 'text-danger' : 'text-success'}">${data.pnlPercent}%</div>
+                        <div class="col-3  ${data.pnlValue < 0 ? 'text-danger' : 'text-success'}">${data.pnlValue}USDT</div>
+                        <div class="col-2"><button type="button" onclick="SocketModel.closeSymbol('${data.accountId}', '${data.symbol}')" class="btn btn-warning w-100">Đóng</button></div>
+                    `;
+            }
+
+        }
+    </script>
+</body>
+
+</html>
